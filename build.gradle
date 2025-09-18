@@ -1,0 +1,85 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.5.5'
+    id 'io.spring.dependency-management' version '1.1.7'
+    id 'com.diffplug.spotless' version '6.19.0'
+}
+
+group = 'com.skthon'
+version = '0.0.1-SNAPSHOT'
+description = 'manjil'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Web
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework:spring-webflux'
+
+    // Validation
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+    // Test
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    // DB
+    runtimeOnly 'com.mysql:mysql-connector-j'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
+    // Lombok
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+
+    //security
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+
+    // Swagger openapi-ui
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.1'
+
+    // AWS S3
+    implementation 'org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE'
+
+    // JWT
+    implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
+
+    // OpenAI
+    implementation("org.apache.httpcomponents.client5:httpclient5")
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+
+tasks.named('compileJava') {
+    dependsOn 'spotlessApply'
+}
+
+spotless {
+    java {
+        // Google JAVA Format 적용
+        googleJavaFormat()
+        // 아래 순서로 import 문 정렬
+        importOrder('java', 'javax', 'jakarta', 'org', 'com')
+        // 사용하지 않는 import 제거
+        removeUnusedImports()
+        // 각 라인 끝에 있는 공백을 제거
+        trimTrailingWhitespace()
+        // 파일 끝에 새로운 라인 추가
+        endWithNewline()
+    }
+}
+
+def springProfile = project.findProperty("spring.profiles.active") ?: ""
