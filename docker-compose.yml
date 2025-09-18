@@ -1,0 +1,87 @@
+services:
+  app:
+    image: ${DOCKER_USERNAME}/${DOCKER_REPO}:latest
+    container_name: manjil
+    expose:
+      - "8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
+      - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL}
+      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
+    command: ["java","-Dspring.profiles.active=${SPRING_PROFILES_ACTIVE}","-jar","app.jar"]
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - manjil-network
+    restart: unless-stopped
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    expose:
+      - "3306"
+    environment:
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - manjil-network
+    restart: unless-stopped
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    expose:
+      - "6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      retries: 10
+    networks:
+      - manjil-network
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /home/ubuntu/nginx/conf.d:/etc/nginx/conf.d
+      - /etc/letsencrypt:/etc/letsencrypt:ro  # SSL 인증서 공유
+    depends_on:
+      - app
+      - dozzle
+    networks:
+      - manjil-network
+    restart: unless-stopped
+
+  dozzle:
+    image: amir20/dozzle:latest
+    container_name: dozzle
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro  # 로그 접근을 위한 도커 소켓 마운트
+    networks:
+      - manjil-network
+    restart: unless-stopped
+
+networks:
+  manjil-network:
+    driver: bridge  # Docker 기본 브리지 네트워크를 사용
+
+volumes:
+  mysql-data:
+  redis-data:
