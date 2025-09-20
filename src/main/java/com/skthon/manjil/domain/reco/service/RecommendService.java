@@ -1,5 +1,6 @@
 package com.skthon.manjil.domain.reco.service;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -7,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -17,6 +19,8 @@ import com.skthon.manjil.domain.reco.dto.FitnessLevel;
 import com.skthon.manjil.domain.reco.dto.RecommendCard;
 import com.skthon.manjil.domain.reco.dto.RecommendResponse;
 import com.skthon.manjil.domain.reco.dto.RecommendResponse.DiseaseDto;
+import com.skthon.manjil.domain.reco.entity.RecoSnapshot;
+import com.skthon.manjil.domain.reco.repository.RecoSnapshotRepository;
 import com.skthon.manjil.domain.reco.support.Fallbacks;
 import com.skthon.manjil.domain.reco.support.PromptFactory;
 import com.skthon.manjil.domain.user.entity.User;
@@ -36,6 +40,7 @@ public class RecommendService {
   private final ObjectMapper om = new ObjectMapper();
   private final ExerciseRepository exerciseRepository;
   private final UserRepository userRepository;
+  private final RecoSnapshotRepository recoSnapshotRepository; // ★ 스냅샷 저장소
 
   private static String truncate(String s, int max) {
     if (s == null) return null;
@@ -135,16 +140,13 @@ public class RecommendService {
         int repsAdj = Fallbacks.adjustRepsByCondition(Math.max(repsRaw, 1), condition);
 
         List<RecommendCard.ExerciseDetailDto> detailDtos = mapDetails(ex);
-
         String advantages = ex.getAdvantages() == null ? "" : ex.getAdvantages();
 
-        // RecommendCard 생성자: (exerciseId, name, reps, unit, details, advantages)
         cards.add(
             new RecommendCard(
                 ex.getId(), ex.getName(), repsAdj, ex.getUnit(), detailDtos, advantages));
       }
 
-      // 항상 4개로 정규화 (부족하면 allowed로 채움)
       if (cards.size() > 4) {
         cards = new ArrayList<>(cards.subList(0, 4));
       }
@@ -181,10 +183,59 @@ public class RecommendService {
       return new RecommendResponse(cards, disclaimer, diseaseDtos);
 
     } catch (Exception e) {
-      // 5) 폴백도 컨디션 반영 (세트 없는 방식) + 질환 정보 전달
       log.warn("AI recommend failed, fallback used. cause={}", e.toString());
       return Fallbacks.dynamicMinimal(
           u.getAge(), u.getGender(), fitness, condition, allowed, diseaseDtos);
+    }
+  }
+
+  /** 날짜 포함: 생성하고 스냅샷 저장 */
+  @Transactional
+  public RecommendResponse createAndSaveForDate(
+      Long userId, LocalDate date, ConditionRequest condition) {
+    RecommendResponse res = recommendForUserWithCondition(userId, condition);
+
+    String json;
+    try {
+      json = om.writeValueAsString(res);
+    } catch (Exception e) {
+      throw new IllegalStateException("recommend-snapshot-serialize-failed", e);
+    }
+
+    User user =
+        userRepository
+            .findById(userId)
+            .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다. id=" + userId));
+
+    RecoSnapshot snap =
+        recoSnapshotRepository
+            .findByUserAndTargetDate(user, date)
+            .map(s -> s.updatePayload(json))
+            .orElseGet(
+                () -> RecoSnapshot.builder().user(user).targetDate(date).payloadJson(json).build());
+
+    recoSnapshotRepository.save(snap);
+
+    return res;
+  }
+
+  /** 날짜 포함: 저장된 스냅샷 조회 */
+  @Transactional(readOnly = true)
+  public RecommendResponse getSavedForDate(Long userId, LocalDate date) {
+    User user =
+        userRepository
+            .findById(userId)
+            .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다. id=" + userId));
+
+    RecoSnapshot snap =
+        recoSnapshotRepository
+            .findByUserAndTargetDate(user, date)
+            .orElseThrow(() -> new IllegalArgumentException("해당 날짜에 저장된 추천이 없습니다."));
+
+    try {
+      return om.readValue(snap.getPayloadJson(), RecommendResponse.class);
+    } catch (Exception e) {
+      throw new IllegalStateException("recommend-snapshot-deserialize-failed", e);
     }
   }
 

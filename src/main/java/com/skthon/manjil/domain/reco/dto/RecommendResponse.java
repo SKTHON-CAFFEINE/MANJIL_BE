@@ -13,5 +13,8 @@ public record RecommendResponse(
   public record DiseaseDto(
       @Schema(description = "질환 ID", example = "1") Long id,
       @Schema(description = "질환명", example = "고혈압") String type,
-      @Schema(description = "운동 주의사항", example = "발살바 금지, 호흡 멈추지 않기") String caution) {}
+      @Schema(
+              description = "운동 주의사항",
+              example = "운동 중 숨을 참지 말고, 자연스럽게 호흡하세요. 더운 날씨처럼 체온이 급격히 오르는 환경은 피하세요.")
+          String caution) {}
 }
