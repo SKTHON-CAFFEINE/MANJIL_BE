@@ -14,7 +14,11 @@ import com.skthon.manjil.domain.exercise.entity.ExerciseDetail;
 public class ExerciseMapper {
 
   public Exercise toEntity(ExerciseRequest.CreateRequest req) {
-    return Exercise.builder().name(req.getName()).unit(req.getUnit()).build();
+    return Exercise.builder()
+        .name(req.getName())
+        .unit(req.getUnit())
+        .advantages(req.getAdvantages())
+        .build();
   }
 
   public ExerciseDetail toDetailEntity(Exercise exercise, String imageUrl, String description) {
@@ -41,6 +45,7 @@ public class ExerciseMapper {
         .id(exercise.getId())
         .name(exercise.getName())
         .unit(exercise.getUnit())
+        .advantages(exercise.getAdvantages())
         .details(details)
         .build();
   }

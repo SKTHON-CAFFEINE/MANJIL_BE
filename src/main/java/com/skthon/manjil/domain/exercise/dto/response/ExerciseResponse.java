@@ -20,6 +20,9 @@ public class ExerciseResponse {
   @Schema(description = "단위", example = "회")
   private String unit;
 
+  @Schema(description = "운동 유도 장점", example = "어때서 좋다!")
+  private String advantages;
+
   @Schema(description = "운동 방법 상세 목록")
   private List<Detail> details;
 

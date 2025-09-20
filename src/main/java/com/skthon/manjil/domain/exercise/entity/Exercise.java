@@ -37,6 +37,9 @@ public class Exercise {
   @Column(name = "unit", nullable = false, length = 5)
   private String unit;
 
+  @Column(name = "advantages", length = 1000)
+  private String advantages;
+
   @Builder.Default
   @OneToMany(
       mappedBy = "exercise",

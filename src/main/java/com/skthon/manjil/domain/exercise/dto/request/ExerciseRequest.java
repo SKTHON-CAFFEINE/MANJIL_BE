@@ -30,6 +30,8 @@ public class ExerciseRequest {
     @Schema(description = "단위(예: 회, 초, 분, kg)", example = "회", maxLength = 5)
     private String unit;
 
+    private String advantages;
+
     @NotEmpty(message = "운동 방법 상세는 최소 1개 이상이어야 합니다.")
     @Schema(description = "운동 방법 상세 리스트")
     private List<DetailCreate> details;
