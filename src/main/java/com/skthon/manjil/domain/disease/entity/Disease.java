@@ -31,4 +31,8 @@ public class Disease {
   @Column(name = "type", nullable = false, unique = true, length = 50)
   @Schema(description = "질환 종류", example = "고혈압")
   private String type;
+
+  @Column(name = "caution", nullable = true, length = 300)
+  @Schema(description = "운동 주의사항", example = "어쩌구저쩌구")
+  private String caution;
 }

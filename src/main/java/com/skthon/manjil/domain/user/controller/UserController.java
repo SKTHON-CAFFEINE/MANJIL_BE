@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -58,5 +59,45 @@ public class UserController {
     UserResponse userResponse = userService.register(request);
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(BaseResponse.success("회원 가입이 완료되었습니다.", userResponse));
+  }
+
+  @Operation(
+      summary = "내 질환 목록 수정",
+      description =
+          """
+              현재 로그인한 사용자의 질환 목록을 요청 본문에 전달한 diseaseIds로 **전량 교체**합니다.
+
+              동작
+              1) 로그인 사용자 조회 (없으면 404)
+              2) diseaseIds에 해당하는 질환 존재 여부 검증 (누락 시 400)
+              3) 기존 userDiseases 모두 제거 후, 새 질환들로 매핑 생성
+              4) 수정된 사용자 정보를 반환
+              """)
+  @PutMapping("/diseases")
+  public ResponseEntity<BaseResponse<UserResponse>> updateMyDiseases(
+      @Valid @RequestBody UserRequest.UpdateDiseaseRequest request) {
+    UserResponse result = userService.updateCurrentUserDiseases(request);
+    return ResponseEntity.ok(BaseResponse.success("질환이 수정되었습니다.", result));
+  }
+
+  @Operation(
+      summary = "회원가입 정보 검증",
+      description =
+          """
+              이메일과 비밀번호 형식을 검증합니다.
+              - 200 OK: 검증 통과
+              - USER_0006: 이메일 형식 오류
+              - USER_0007: 비밀번호 형식 오류
+              - USER_0008: 이메일 & 비밀번호 모두 오류
+              """)
+  @PostMapping(
+      path = "/valid",
+      consumes = MediaType.APPLICATION_JSON_VALUE,
+      produces = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<BaseResponse<Void>> validateSignup(
+      @Valid @RequestBody UserRequest.SignupValidateRequest request) {
+
+    userService.validateSignup(request);
+    return ResponseEntity.ok(BaseResponse.success(null));
   }
 }

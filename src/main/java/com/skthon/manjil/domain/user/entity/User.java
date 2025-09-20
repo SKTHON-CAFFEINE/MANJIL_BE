@@ -2,6 +2,7 @@ package com.skthon.manjil.domain.user.entity;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -72,9 +73,24 @@ public class User extends BaseTimeEntity {
   private Integer point = 0;
 
   public void replaceDiseases(Set<Disease> newDiseases) {
-    userDiseases.clear();
+    // 현재 보유 set의 diseaseId 집합
+    Set<Long> currentIds =
+        userDiseases.stream().map(ud -> ud.getDisease().getId()).collect(Collectors.toSet());
+
+    Set<Long> newIds = newDiseases.stream().map(Disease::getId).collect(Collectors.toSet());
+
+    // 1) 제거: 현재에만 있는 것
+    userDiseases.removeIf(ud -> !newIds.contains(ud.getDisease().getId()));
+    // orphanRemoval=true 이면 flush 시점에 delete
+
+    // 2) 추가: 신규에만 있는 것
+    Set<Long> toAdd = new HashSet<>(newIds);
+    toAdd.removeAll(currentIds);
+
     for (Disease d : newDiseases) {
-      userDiseases.add(UserDisease.builder().user(this).disease(d).build());
+      if (toAdd.contains(d.getId())) {
+        userDiseases.add(UserDisease.builder().user(this).disease(d).build());
+      }
     }
   }
 

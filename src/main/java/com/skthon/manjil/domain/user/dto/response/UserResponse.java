@@ -37,4 +37,7 @@ public class UserResponse {
 
   @Schema(description = "연결된 질환 ID 목록", example = "[1, 3]")
   private Set<Long> diseaseIds;
+
+  @Schema(description = "포인트", example = "100")
+  private Integer point;
 }

@@ -15,6 +15,7 @@ import com.skthon.manjil.domain.user.entity.User.Gender;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Schema(title = "UserRequest DTO", description = "사용자 관련 요청")
 public class UserRequest {
@@ -86,7 +87,22 @@ public class UserRequest {
 
     @NotNull(message = "질환 ID 목록은 필수입니다.")
     @Size(min = 1, message = "최소 1개 이상의 질환을 입력해야 합니다.")
-    @Schema(description = "새 질환 ID 집합(전체 교체)", example = "[2,5,9]")
+    @Schema(description = "새 질환 ID 집합(전체 교체)", example = "[2,5]")
     private Set<Long> diseaseIds;
+  }
+
+  @Getter
+  @NoArgsConstructor
+  @AllArgsConstructor
+  @Schema(title = "SignUpValidateRequest", description = "회원가입 시 이메일/비밀번호 형식 검증 요청")
+  public static class SignupValidateRequest {
+
+    @Schema(description = "이메일", example = "test@example.com")
+    @NotBlank(message = "이메일은 필수입니다.")
+    private String email;
+
+    @Schema(description = "비밀번호", example = "Password123!")
+    @NotBlank(message = "비밀번호는 필수입니다.")
+    private String password;
   }
 }

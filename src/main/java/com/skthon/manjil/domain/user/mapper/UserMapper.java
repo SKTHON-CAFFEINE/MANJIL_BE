@@ -11,7 +11,7 @@ import com.skthon.manjil.domain.user.entity.User;
 @Component
 public class UserMapper {
 
-  public User toEntity(UserRequest.RegisterRequest req, String encodedPassword) {
+  public User toEntity(UserRequest.RegisterRequest req, String encodedPassword, int point) {
     return User.builder()
         .email(req.getEmail())
         .password(encodedPassword)
@@ -19,6 +19,7 @@ public class UserMapper {
         .gender(req.getGender())
         .age(req.getAge())
         .fitnessLevel(req.getFitnessLevel())
+        .point(point)
         .build();
   }
 
@@ -37,6 +38,7 @@ public class UserMapper {
         .age(user.getAge())
         .fitnessLevel(user.getFitnessLevel())
         .diseaseIds(diseaseIds)
+        .point(user.getPoint())
         .build();
   }
 }
