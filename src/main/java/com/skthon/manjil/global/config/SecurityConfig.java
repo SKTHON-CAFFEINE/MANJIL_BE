@@ -56,7 +56,8 @@ public class SecurityConfig {
                         "/api/users/register",
                         "/api/auth/login/**",
                         "/api/auth/refresh",
-                        "/api/users/valid")
+                        "/api/users/valid",
+                        "/api/diseases")
                     .permitAll()
                     .requestMatchers("/swagger-ui/**", "/v3/api-docs/**")
                     .permitAll()
