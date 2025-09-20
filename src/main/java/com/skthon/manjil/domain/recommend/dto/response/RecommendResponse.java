@@ -7,6 +7,4 @@ import lombok.Getter;
 @Getter
 @Builder
 @Schema(title = "RecommendResponse DTO", description = "추천 운동 관련 응답")
-public class RecommendResponse {
-
-}
+public class RecommendResponse {}

@@ -43,6 +43,6 @@ public class Report extends BaseTimeEntity {
   private LocalDate date;
 
   @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, optional = true)
-  @JoinColumn(name = "condition_id", unique = true, nullable = true)
+  @JoinColumn(name = "health_condition_id", unique = true, nullable = true)
   private Condition condition;
 }

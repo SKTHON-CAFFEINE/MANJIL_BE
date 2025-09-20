@@ -1,8 +1,5 @@
 package com.skthon.manjil.domain.recommend.entity;
 
-import com.skthon.manjil.domain.exercise.entity.Exercise;
-import com.skthon.manjil.domain.report.entity.Report;
-import com.skthon.manjil.global.common.BaseTimeEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -12,6 +9,11 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+
+import com.skthon.manjil.domain.exercise.entity.Exercise;
+import com.skthon.manjil.domain.report.entity.Report;
+import com.skthon.manjil.global.common.BaseTimeEntity;
+
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

@@ -18,7 +18,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "condition")
+@Table(name = "health_condition")
 public class Condition {
 
   @Id

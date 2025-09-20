@@ -7,6 +7,4 @@ import lombok.Getter;
 @Getter
 @Builder
 @Schema(title = "UserResponse DTO", description = "사용자 관련 응답")
-public class UserResponse {
-
-}
+public class UserResponse {}

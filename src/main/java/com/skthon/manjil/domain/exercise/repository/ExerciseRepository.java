@@ -1,10 +1,9 @@
 package com.skthon.manjil.domain.exercise.repository;
 
-import com.skthon.manjil.domain.exercise.entity.Exercise;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-@Repository
-public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
+import com.skthon.manjil.domain.exercise.entity.Exercise;
 
-}
+@Repository
+public interface ExerciseRepository extends JpaRepository<Exercise, Long> {}

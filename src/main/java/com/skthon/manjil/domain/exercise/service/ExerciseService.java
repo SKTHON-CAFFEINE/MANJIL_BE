@@ -1,14 +1,14 @@
 package com.skthon.manjil.domain.exercise.service;
 
 import jakarta.transaction.Transactional;
+
+import org.springframework.stereotype.Service;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
 @Slf4j
-public class ExerciseService {
-
-}
+public class ExerciseService {}
