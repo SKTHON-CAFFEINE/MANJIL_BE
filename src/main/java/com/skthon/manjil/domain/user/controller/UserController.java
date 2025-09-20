@@ -5,6 +5,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.skthon.manjil.domain.user.dto.request.UserRequest;
+import com.skthon.manjil.domain.user.dto.response.UserInfoResponse;
 import com.skthon.manjil.domain.user.dto.response.UserResponse;
 import com.skthon.manjil.domain.user.service.UserService;
 import com.skthon.manjil.global.response.BaseResponse;
@@ -99,5 +101,23 @@ public class UserController {
 
     userService.validateSignup(request);
     return ResponseEntity.ok(BaseResponse.success(null));
+  }
+
+  @Operation(
+      summary = "내 정보 요약",
+      description =
+          """
+              현재 로그인한 사용자의 요약 정보를 반환합니다.
+              - 반환 항목:
+                • 이름(username), 포인트(point), 오늘 추천 여부(recommendedToday)
+
+              - recommendedToday 판별:
+                사용자와 연결된 최신 Report 엔티티의 date 값이 오늘(LocalDate.now, Asia/Seoul 기준)과 같으면 true,
+                아니면 false로 반환합니다.
+              """)
+  @GetMapping("/summary")
+  public ResponseEntity<BaseResponse<UserInfoResponse>> getMyInfoSummary() {
+    UserInfoResponse data = userService.getMyInfoSummary();
+    return ResponseEntity.ok(BaseResponse.success("내 정보 요약 조회 성공입니다.", data));
   }
 }
