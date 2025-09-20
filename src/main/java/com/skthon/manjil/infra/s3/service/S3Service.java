@@ -1,6 +1,5 @@
 package com.skthon.manjil.infra.s3.service;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Base64;
 import java.util.List;
@@ -54,47 +53,6 @@ public class S3Service {
       amazonS3.putObject(
           new PutObjectRequest(s3Config.getBucket(), keyName, file.getInputStream(), metadata));
       return keyName;
-    } catch (AmazonS3Exception e) {
-      throw new CustomException(S3ErrorCode.S3_CONNECTION_FAILED);
-    } catch (IOException e) {
-      throw new CustomException(S3ErrorCode.IO_EXCEPTION);
-    }
-  }
-
-  /** Base64 인코딩된 이미지를 S3에 업로드하고 public URL을 반환합니다. */
-  public String base64UploadFile(PathName pathName, String base64Url) {
-    if (!validateBase64(base64Url)) {
-      throw new CustomException(S3ErrorCode.INVALID_BASE64);
-    }
-
-    String contentType = "image/png";
-    String base64Data = base64Url;
-
-    if (base64Url.contains(",")) {
-      String[] parts = base64Url.split(",");
-      contentType = parts[0].substring(5, parts[0].indexOf(";"));
-      base64Data = parts[1];
-    }
-
-    byte[] decodedBytes = Base64.getDecoder().decode(base64Data);
-
-    String ext =
-        switch (contentType) {
-          case "image/jpeg" -> ".jpg";
-          case "image/png" -> ".png";
-          case "image/webp" -> ".webp";
-          default -> throw new CustomException(S3ErrorCode.FILE_TYPE_INVALID);
-        };
-    String keyName = getPrefix(pathName) + "/" + UUID.randomUUID() + ext;
-
-    ObjectMetadata metadata = new ObjectMetadata();
-    metadata.setContentLength(decodedBytes.length);
-    metadata.setContentType(contentType);
-
-    try (ByteArrayInputStream inputStream = new ByteArrayInputStream(decodedBytes)) {
-      amazonS3.putObject(
-          new PutObjectRequest(s3Config.getBucket(), keyName, inputStream, metadata));
-      return amazonS3.getUrl(s3Config.getBucket(), keyName).toString();
     } catch (AmazonS3Exception e) {
       throw new CustomException(S3ErrorCode.S3_CONNECTION_FAILED);
     } catch (IOException e) {
