@@ -1,6 +1,7 @@
 package com.skthon.manjil.domain.report.entity;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -45,4 +46,9 @@ public class Report extends BaseTimeEntity {
   @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, optional = true)
   @JoinColumn(name = "health_condition_id", unique = true, nullable = true)
   private Condition condition;
+
+  public boolean isToday() {
+    LocalDate today = LocalDate.now(ZoneId.of("Asia/Seoul")); // KST 기준
+    return date != null && date.isEqual(today);
+  }
 }
