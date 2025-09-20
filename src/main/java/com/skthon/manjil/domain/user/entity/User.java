@@ -65,7 +65,7 @@ public class User extends BaseTimeEntity {
 
   @Builder.Default
   @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-  private HashSet<UserDisease> userDiseases = new HashSet<>();
+  private Set<UserDisease> userDiseases = new HashSet<>();
 
   public void replaceDiseases(Set<Disease> newDiseases) {
     userDiseases.clear();
