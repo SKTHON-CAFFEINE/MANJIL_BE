@@ -1,4 +1,4 @@
-package com.skthon.manjil.domain.recommend.mapper;
+package com.skthon.manjil.domain.reco.mapper;
 
 import org.springframework.stereotype.Component;
 

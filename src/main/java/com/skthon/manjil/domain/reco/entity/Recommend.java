@@ -1,4 +1,4 @@
-package com.skthon.manjil.domain.recommend.entity;
+package com.skthon.manjil.domain.reco.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

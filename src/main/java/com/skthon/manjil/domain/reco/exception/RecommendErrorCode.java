@@ -1,4 +1,4 @@
-package com.skthon.manjil.domain.recommend.exception;
+package com.skthon.manjil.domain.reco.exception;
 
 import org.springframework.http.HttpStatus;
 

@@ -40,7 +40,7 @@ dependencies {
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
 
-    //security
+    // Security
     implementation 'org.springframework.boot:spring-boot-starter-security'
 
     // Swagger openapi-ui
@@ -55,7 +55,10 @@ dependencies {
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
 
     // OpenAI
-    implementation("org.apache.httpcomponents.client5:httpclient5")
+    implementation 'org.apache.httpcomponents.client5:httpclient5'
+
+    // Cache
+    implementation 'com.github.ben-manes.caffeine:caffeine:3.1.8'
 }
 
 tasks.named('test') {
