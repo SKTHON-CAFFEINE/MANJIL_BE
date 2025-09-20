@@ -11,6 +11,10 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum UserErrorCode implements BaseErrorCode {
   EXAMPLE_ERROR_CODE("USER_0000", "예시 에러코드로 커스터마이징이 필요합니다.", HttpStatus.BAD_REQUEST),
+
+  DUPLICATE_EMAIL("USER_0001", "이미 사용 중인 이메일입니다.", HttpStatus.CONFLICT),
+  INVALID_DISEASE_IDS("USER_0002", "존재하지 않는 질환 ID가 포함되어 있습니다.", HttpStatus.BAD_REQUEST),
+  USER_NOT_FOUND("USER_0005", "회원을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
   ;
 
   private final String code;

@@ -1,8 +1,21 @@
 package com.skthon.manjil.domain.user.controller;
 
+import jakarta.validation.Valid;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.skthon.manjil.domain.user.dto.request.UserRequest;
+import com.skthon.manjil.domain.user.dto.response.UserResponse;
+import com.skthon.manjil.domain.user.service.UserService;
+import com.skthon.manjil.global.response.BaseResponse;
+
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
@@ -10,4 +23,40 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @RequestMapping("/api/users")
 @Tag(name = "User", description = "User 관련 API")
-public class UserController {}
+public class UserController {
+
+  private final UserService userService;
+
+  @Operation(
+      summary = "회원가입",
+      description =
+          """
+              새 사용자를 등록하고, 선택된 질환(diseaseIds)을 사용자와 연결합니다.
+
+              요청 형식 (JSON)
+              - email: 사용자 이메일 (최대 50자, 형식 검증)
+              - password: 최소 8자, 영문/숫자/특수문자 포함, 최대 20자
+              - username: 2~20자, 한글/영문/숫자만 허용
+              - gender: 성별 (MALE | FEMALE)
+              - age: 1~150
+              - fitnessLevel: 1~4
+              - diseaseIds: 질환 ID 배열 (최소 1개, 예: [1,3])
+
+              동작
+              1) 이메일 중복 검사 (중복 시 409)
+              2) 비밀번호 암호화 저장
+              3) diseaseIds 로 질환 존재 여부 검증 (없으면 400)
+              4) 사용자-질환 연결 후 생성된 사용자 정보 반환(연결된 질환 ID 포함)
+              """)
+  @PostMapping(
+      path = "/register",
+      consumes = MediaType.APPLICATION_JSON_VALUE,
+      produces = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<BaseResponse<UserResponse>> registerUser(
+      @Valid @RequestBody UserRequest.RegisterRequest request) {
+
+    UserResponse userResponse = userService.register(request);
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(BaseResponse.success("회원 가입이 완료되었습니다.", userResponse));
+  }
+}
