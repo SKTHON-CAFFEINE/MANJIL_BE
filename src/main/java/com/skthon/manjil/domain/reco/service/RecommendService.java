@@ -1,6 +1,7 @@
 package com.skthon.manjil.domain.reco.service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,7 +41,7 @@ public class RecommendService {
     return s.length() <= max ? s : s.substring(0, max) + "...(truncated)";
   }
 
-  /** 로그인 사용자(userId)의 DB 프로필 + 오늘의 컨디션(condition)을 조합해서 운동을 추천한다. */
+  /** 로그인 사용자(userId)의 DB 프로필 + 오늘의 컨디션(condition)을 조합해서 운동을 추천 */
   public RecommendResponse recommendForUserWithCondition(Long userId, ConditionRequest condition) {
     User u =
         userRepository
@@ -50,7 +51,7 @@ public class RecommendService {
     List<String> diseasesKo =
         u.getUserDiseases().stream()
             .map(UserDisease::getDisease)
-            .map(d -> d.getType()) // 한글 질환명
+            .map(d -> d.getType())
             .filter(s -> s != null && !s.isBlank())
             .toList();
 
@@ -98,7 +99,7 @@ public class RecommendService {
         throw new IllegalStateException("empty-cards");
       }
 
-      // 4) 검증/보정 + 컨디션 기반 볼륨 보정(세트/값)
+      // 4) 검증/보정 + 컨디션 기반 '횟수(reps)' 보정 (세트 개념 제거)
       Map<Long, Exercise> byId = new LinkedHashMap<>();
       for (Exercise e : allowed) byId.put(e.getId(), e);
 
@@ -108,31 +109,43 @@ public class RecommendService {
       List<RecommendCard> cards = new ArrayList<>();
       for (AiCard c : out.cards) {
         Exercise ex = null;
-
-        if (c.exerciseId != null) {
-          ex = byId.get(c.exerciseId);
-          if (ex != null) {
-            log.debug("[Reco] matched by id: {} -> {}", c.exerciseId, ex.getName());
-          }
-        }
-
+        if (c.exerciseId != null) ex = byId.get(c.exerciseId);
         if (ex == null && c.name != null && !c.name.isBlank()) {
           ex = byName.get(c.name);
-          if (ex != null) {
-            log.debug("[Reco] matched by name: {}", c.name);
-          }
         }
-
         if (ex == null) {
           log.debug("[Reco] skip unknown exercise (id={}, name={})", c.exerciseId, c.name);
-          continue; // 여전히 못 찾으면 스킵
+          continue;
         }
 
-        int sets = clamp(c.sets, 1, 3);
-        int value = Math.max(c.value, 1);
-        int[] adjusted = Fallbacks.adjustByCondition(sets, value, condition);
-        cards.add(
-            new RecommendCard(ex.getId(), ex.getName(), adjusted[0], adjusted[1], ex.getUnit()));
+        int repsRaw = (c.value == null ? 0 : c.value);
+        int repsAdj = Fallbacks.adjustRepsByCondition(Math.max(repsRaw, 1), condition);
+
+        // details 매핑 (null-safe)
+        List<RecommendCard.ExerciseDetailDto> detailDtos = mapDetails(ex);
+
+        // RecommendCard 생성자: (exerciseId, name, reps, unit, details)
+        cards.add(new RecommendCard(ex.getId(), ex.getName(), repsAdj, ex.getUnit(), detailDtos));
+      }
+
+      // 항상 4개로 정규화 (부족하면 allowed로 채움)
+      if (cards.size() > 4) {
+        cards = new ArrayList<>(cards.subList(0, 4));
+      }
+      if (cards.size() < 4) {
+        java.util.Set<Long> picked = new java.util.HashSet<>();
+        for (RecommendCard rc : cards) picked.add(rc.exerciseId());
+
+        for (Exercise e : allowed) {
+          if (cards.size() >= 4) break;
+          if (picked.contains(e.getId())) continue;
+
+          int repsFill = Fallbacks.adjustRepsByCondition(10, condition); // 기본 10회에서 보정
+          List<RecommendCard.ExerciseDetailDto> detailDtos = mapDetails(e);
+
+          cards.add(new RecommendCard(e.getId(), e.getName(), repsFill, e.getUnit(), detailDtos));
+          picked.add(e.getId());
+        }
       }
 
       if (cards.isEmpty()) throw new IllegalStateException("no-valid-cards");
@@ -149,15 +162,20 @@ public class RecommendService {
       return new RecommendResponse(cards, disclaimer);
 
     } catch (Exception e) {
-      // 5) 폴백도 컨디션 반영
+      // 5) 폴백도 컨디션 반영 (세트 없는 방식)
       log.warn("AI recommend failed, fallback used. cause={}", e.toString());
       return Fallbacks.dynamicMinimal(u.getAge(), u.getGender(), fitness, condition, allowed);
     }
   }
 
-  private static int clamp(Integer v, int min, int max) {
-    if (v == null) return min;
-    return Math.max(min, Math.min(max, v));
+  /** Exercise → RecommendCard.ExerciseDetailDto 리스트 매핑 (null-safe) */
+  private static List<RecommendCard.ExerciseDetailDto> mapDetails(Exercise ex) {
+    if (ex == null || ex.getDetails() == null) return Collections.emptyList();
+    return ex.getDetails().stream()
+        .map(
+            d ->
+                new RecommendCard.ExerciseDetailDto(d.getId(), d.getImageUrl(), d.getDescription()))
+        .toList();
   }
 
   // ==== 내부 파싱용 DTO (AI 응답 스키마) ====
@@ -170,7 +188,6 @@ public class RecommendService {
   @JsonIgnoreProperties(ignoreUnknown = true)
   static class AiCard {
     public Long exerciseId;
-    public Integer sets;
     public Integer value;
     public String name;
   }
