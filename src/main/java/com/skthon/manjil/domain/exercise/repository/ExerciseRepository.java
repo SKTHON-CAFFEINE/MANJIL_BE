@@ -14,4 +14,9 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
   List<Exercise> findAllByOrderByIdAsc();
 
   Optional<Exercise> findByName(String name);
+
+  boolean existsByName(String name);
+
+  // (필요시) 대소문자 무시 버전이 필요하다면:
+  // boolean existsByNameIgnoreCase(String name);
 }
