@@ -10,8 +10,11 @@ import org.springframework.stereotype.Service;
 
 import com.skthon.manjil.domain.disease.entity.Disease;
 import com.skthon.manjil.domain.disease.repository.DiseaseRepository;
+import com.skthon.manjil.domain.report.entity.Report;
+import com.skthon.manjil.domain.report.repository.ReportRepository;
 import com.skthon.manjil.domain.user.dto.request.UserRequest;
 import com.skthon.manjil.domain.user.dto.request.UserRequest.UpdateDiseaseRequest;
+import com.skthon.manjil.domain.user.dto.response.UserInfoResponse;
 import com.skthon.manjil.domain.user.dto.response.UserResponse;
 import com.skthon.manjil.domain.user.entity.User;
 import com.skthon.manjil.domain.user.exception.UserErrorCode;
@@ -31,6 +34,7 @@ public class UserService {
 
   private final UserRepository userRepository;
   private final DiseaseRepository diseaseRepository;
+  private final ReportRepository reportRepository;
   private final UserMapper userMapper;
   private final PasswordEncoder passwordEncoder;
 
@@ -101,5 +105,28 @@ public class UserService {
     if (!passwordValid) {
       throw new CustomException(UserErrorCode.INVALID_PASSWORD_FORMAT);
     }
+  }
+
+  public UserInfoResponse getMyInfoSummary() {
+    Long userId = SecurityUtil.getCurrentUserId();
+    User user =
+        userRepository
+            .findById(userId)
+            .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+
+    boolean recommendedToday = hasRecommendedToday(user.getId());
+
+    return UserInfoResponse.builder()
+        .username(user.getUsername())
+        .point(user.getPoint())
+        .recommendedToday(recommendedToday)
+        .build();
+  }
+
+  public boolean hasRecommendedToday(Long userId) {
+    // 최근 report 하나 조회 (예: 날짜 기준 내림차순)
+    Report report = reportRepository.findTopByUserIdOrderByDateDesc(userId).orElse(null);
+
+    return report != null && report.isToday();
   }
 }
