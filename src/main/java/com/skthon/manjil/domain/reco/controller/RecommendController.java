@@ -66,6 +66,18 @@ public class RecommendController {
     return BaseResponse.success("저장된 추천 조회 성공", service.getSavedForDate(me.getUserId(), date));
   }
 
+  // === 특정 날짜에 추천 생성+저장 ===
+  @PostMapping("/bodyweight/{date}")
+  @Operation(summary = "특정 날짜 추천 생성+저장", description = "캘린더에서 지정한 날짜에 추천 생성 후 저장")
+  public BaseResponse<RecommendResponse> createAndSaveForDate(
+      @AuthenticationPrincipal com.skthon.manjil.global.security.CustomUserDetails me,
+      @PathVariable("date") String dateStr,
+      @RequestBody @Valid ConditionRequest condition) {
+    LocalDate date = LocalDate.parse(dateStr, DF);
+    return BaseResponse.success(
+        "추천 생성 및 저장 성공", service.createAndSaveForDate(me.getUserId(), date, condition));
+  }
+
   // === 서버 상태 확인 ===
   @GetMapping("/ping")
   @Operation(summary = "서버 상태 확인", description = "운영/모니터링용 엔드포인트")
