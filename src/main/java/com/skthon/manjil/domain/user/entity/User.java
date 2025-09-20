@@ -1,9 +1,8 @@
 package com.skthon.manjil.domain.user.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.skthon.manjil.domain.disease.entity.Disease;
-import com.skthon.manjil.global.common.BaseTimeEntity;
-import io.swagger.v3.oas.annotations.media.Schema;
+import java.util.HashSet;
+import java.util.Set;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -17,8 +16,12 @@ import jakarta.persistence.Table;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
-import java.util.HashSet;
-import java.util.Set;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.skthon.manjil.domain.disease.entity.Disease;
+import com.skthon.manjil.global.common.BaseTimeEntity;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -64,19 +67,11 @@ public class User extends BaseTimeEntity {
   @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
   private Set<UserDisease> userDiseases = new HashSet<>();
 
-  @Column(name = "point", nullable = false)
-  @Builder.Default
-  private Integer point = 0;
-
   public void replaceDiseases(Set<Disease> newDiseases) {
     userDiseases.clear();
     for (Disease d : newDiseases) {
       userDiseases.add(UserDisease.builder().user(this).disease(d).build());
     }
-  }
-
-  public void addPoint(int amount) {
-    this.point += amount;
   }
 
   public enum Gender {
