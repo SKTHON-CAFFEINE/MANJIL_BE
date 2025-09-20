@@ -7,4 +7,11 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @Schema(description = "운동 추천 응답")
 public record RecommendResponse(
     @Schema(description = "추천 운동 카드 리스트") List<RecommendCard> cards,
-    @Schema(description = "안내 문구") String disclaimer) {}
+    @Schema(description = "안내 문구") String disclaimer,
+    @Schema(description = "사용자 등록 질환 목록") List<DiseaseDto> diseases) {
+  @Schema(description = "질환 정보")
+  public record DiseaseDto(
+      @Schema(description = "질환 ID", example = "1") Long id,
+      @Schema(description = "질환명", example = "고혈압") String type,
+      @Schema(description = "운동 주의사항", example = "발살바 금지, 호흡 멈추지 않기") String caution) {}
+}

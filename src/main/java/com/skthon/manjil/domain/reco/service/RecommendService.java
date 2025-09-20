@@ -16,6 +16,7 @@ import com.skthon.manjil.domain.reco.dto.ConditionRequest;
 import com.skthon.manjil.domain.reco.dto.FitnessLevel;
 import com.skthon.manjil.domain.reco.dto.RecommendCard;
 import com.skthon.manjil.domain.reco.dto.RecommendResponse;
+import com.skthon.manjil.domain.reco.dto.RecommendResponse.DiseaseDto;
 import com.skthon.manjil.domain.reco.support.Fallbacks;
 import com.skthon.manjil.domain.reco.support.PromptFactory;
 import com.skthon.manjil.domain.user.entity.User;
@@ -48,11 +49,23 @@ public class RecommendService {
             .findById(userId)
             .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다. id=" + userId));
 
+    // 프롬프트용: 한글 질환명 리스트
     List<String> diseasesKo =
         u.getUserDiseases().stream()
             .map(UserDisease::getDisease)
             .map(d -> d.getType())
             .filter(s -> s != null && !s.isBlank())
+            .toList();
+
+    // 응답용: 질환 DTO(id, type, caution)
+    List<DiseaseDto> diseaseDtos =
+        u.getUserDiseases().stream()
+            .map(UserDisease::getDisease)
+            .filter(d -> d != null)
+            .map(
+                d ->
+                    new DiseaseDto(
+                        d.getId(), d.getType(), d.getCaution() == null ? "" : d.getCaution()))
             .toList();
 
     FitnessLevel fitness = FitnessLevel.fromCode(u.getFitnessLevel());
@@ -121,11 +134,14 @@ public class RecommendService {
         int repsRaw = (c.value == null ? 0 : c.value);
         int repsAdj = Fallbacks.adjustRepsByCondition(Math.max(repsRaw, 1), condition);
 
-        // details 매핑 (null-safe)
         List<RecommendCard.ExerciseDetailDto> detailDtos = mapDetails(ex);
 
-        // RecommendCard 생성자: (exerciseId, name, reps, unit, details)
-        cards.add(new RecommendCard(ex.getId(), ex.getName(), repsAdj, ex.getUnit(), detailDtos));
+        String advantages = ex.getAdvantages() == null ? "" : ex.getAdvantages();
+
+        // RecommendCard 생성자: (exerciseId, name, reps, unit, details, advantages)
+        cards.add(
+            new RecommendCard(
+                ex.getId(), ex.getName(), repsAdj, ex.getUnit(), detailDtos, advantages));
       }
 
       // 항상 4개로 정규화 (부족하면 allowed로 채움)
@@ -140,10 +156,13 @@ public class RecommendService {
           if (cards.size() >= 4) break;
           if (picked.contains(e.getId())) continue;
 
-          int repsFill = Fallbacks.adjustRepsByCondition(10, condition); // 기본 10회에서 보정
+          int repsFill = Fallbacks.adjustRepsByCondition(10, condition);
           List<RecommendCard.ExerciseDetailDto> detailDtos = mapDetails(e);
+          String advantages = e.getAdvantages() == null ? "" : e.getAdvantages();
 
-          cards.add(new RecommendCard(e.getId(), e.getName(), repsFill, e.getUnit(), detailDtos));
+          cards.add(
+              new RecommendCard(
+                  e.getId(), e.getName(), repsFill, e.getUnit(), detailDtos, advantages));
           picked.add(e.getId());
         }
       }
@@ -159,12 +178,13 @@ public class RecommendService {
           "[Reco] final cards={} exampleFirst={}",
           cards.size(),
           cards.isEmpty() ? null : cards.get(0));
-      return new RecommendResponse(cards, disclaimer);
+      return new RecommendResponse(cards, disclaimer, diseaseDtos);
 
     } catch (Exception e) {
-      // 5) 폴백도 컨디션 반영 (세트 없는 방식)
+      // 5) 폴백도 컨디션 반영 (세트 없는 방식) + 질환 정보 전달
       log.warn("AI recommend failed, fallback used. cause={}", e.toString());
-      return Fallbacks.dynamicMinimal(u.getAge(), u.getGender(), fitness, condition, allowed);
+      return Fallbacks.dynamicMinimal(
+          u.getAge(), u.getGender(), fitness, condition, allowed, diseaseDtos);
     }
   }
 
